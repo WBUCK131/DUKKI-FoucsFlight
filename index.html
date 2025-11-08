@@ -798,6 +798,8 @@ body {
     border-radius: 10px;
     cursor: pointer;
     transition: background-color 0.2s;
+    width: 100%; /* 너비 100%로 설정 */
+    box-sizing: border-box; /* 패딩, 보더가 너비에 포함되도록 설정 */
 }
 .map-style-button.active {
     background: var(--color-primary);
@@ -813,6 +815,17 @@ body {
     color: var(--color-text-dim) !important; 
     margin-bottom: 15px;
 }
+#mapStyleButtons {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+#mapStyleButtons .map-style-button {
+    flex: 1;
+    margin: 0;
+}
+
 
 /* 🎫 티켓/바코드 스타일 (프린트 모션 유지) */
 #boardingPassContainer {
@@ -1144,11 +1157,18 @@ body {
 <div class="modal" id="settingsModal">
     <div class="settings-content">
         <h3>설정 ⚙️</h3>
-        <button id="editNameBtn" style="width: 100%; margin: 10px 0;">이름 수정하기</button>
+        <button id="editNameBtn">이름 수정하기</button>
         
         <h4 style="color:var(--color-primary); margin-top: 20px; margin-bottom: 5px;">지도 스타일 설정 🗺️</h4>
-        <button class="map-style-button" data-style="2d">2D 일반 지도</button>
-        <button class="map-style-button active" data-style="satellite">위성 지도</button> 
+        <div id="mapStyleButtons">
+            <button class="map-style-button" data-style="2d">2D 일반 지도</button>
+            <button class="map-style-button active" data-style="satellite">위성 지도</button> 
+        </div>
+        
+        <h4 style="color:var(--color-primary); margin-top: 20px; margin-bottom: 5px;">데이터 관리 💾</h4>
+        <button onclick="exportData()">데이터 내보내기</button>
+        <button onclick="importData()">데이터 불러오기</button>
+        
         <div style="font-size: 12px; color: #888; text-align: center; margin-top: 10px;">By TEAMBUCK</div> 
         <button id="closeSettingsModalBtn">닫기</button>
     </div>
@@ -1394,6 +1414,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 💵 돈 UI 초기화
     function initializeMoneyUI() {
+        currentMoney = parseInt(localStorage.getItem('focusFlightMoney')) || 1; // 로컬 스토리지에서 다시 로드
         moneyDisplay.textContent = currentMoney;
         moneyButton.classList.remove('in-flight'); // 초기 위치 설정
     }
@@ -1417,12 +1438,22 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     function initializeMapLayers() {
-        currentBaseLayer = baseLayers["위성 지도"];
+        const savedStyle = localStorage.getItem('focusFlightMapStyle') || 'satellite';
+        currentBaseLayer = baseLayers[savedStyle === '2d' ? "2D 일반 지도" : "위성 지도"];
         currentBaseLayer.addTo(map);
-        document.body.classList.add('map-style-satellite'); 
+        document.body.classList.remove('map-style-satellite', 'map-style-2d'); 
+        document.body.classList.add(`map-style-${savedStyle}`); 
         map.setZoom(2); 
-    }
 
+        // 버튼 초기 활성화 상태 설정
+        document.querySelectorAll('.map-style-button').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.style === savedStyle) {
+                btn.classList.add('active');
+            }
+        });
+    }
+    
     function switchMapStyle(style) {
         if (currentBaseLayer && map.hasLayer(currentBaseLayer)) {
             map.removeLayer(currentBaseLayer);
@@ -1432,13 +1463,17 @@ document.addEventListener('DOMContentLoaded', function() {
             currentBaseLayer = baseLayers["2D 일반 지도"];
             currentBaseLayer.addTo(map);
             document.body.classList.remove('map-style-satellite'); 
+            document.body.classList.add('map-style-2d'); 
             map.setView([20, 0], 2); 
         } else if (style === 'satellite') {
             currentBaseLayer = baseLayers["위성 지도"];
             currentBaseLayer.addTo(map);
+            document.body.classList.remove('map-style-2d'); 
             document.body.classList.add('map-style-satellite'); 
             map.setView([20, 0], 2); 
         }
+        
+        localStorage.setItem('focusFlightMapStyle', style); // 설정 저장
 
         document.querySelectorAll('.map-style-button').forEach(btn => {
             if (btn.dataset.style === style) {
@@ -1947,6 +1982,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentMoney < requiredMoney) {
             showPopup(`잔액이 부족합니다! 😥 (필요 금액: ${requiredMoney}원)`, 3000);
             return; 
+        }
+
+        // 금액 차감 (퍼스트/비즈니스 클래스만)
+        if (requiredMoney > 0) {
+            updateMoney(-requiredMoney); 
+            showPopup(`잔액 ${requiredMoney}원 차감. 발권을 시작합니다.`, 3000);
         }
 
         // 예매 가능하면 발권 진행
@@ -2791,10 +2832,82 @@ document.addEventListener('DOMContentLoaded', function() {
         button.onclick = (e) => {
             const style = e.target.dataset.style;
             switchMapStyle(style);
-            settingsModal.style.display = 'none'; 
-            bottomNavUpdateActive('homeBtn');
+            // settingsModal.style.display = 'none'; // 설정을 닫지 않도록 주석 처리
+            // bottomNavUpdateActive('homeBtn');
         };
     });
+    
+    // ----------------------------------------------------
+    // 💾 데이터 내보내기/불러오기 기능 추가
+    // ----------------------------------------------------
+
+    /**
+     * 📤 LocalStorage 데이터 내보내기 (.json 파일로 저장)
+     */
+    window.exportData = function() {
+        const data = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            // focusFlight으로 시작하는 키만 백업 대상으로 제한 (옵션)
+            if (key.startsWith('focusFlight')) {
+                 data[key] = localStorage.getItem(key);
+            }
+        }
+
+        const dataJson = JSON.stringify(data, null, 2);
+        const blob = new Blob([dataJson], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+        a.download = `focusFlight_backup_${dateStr}.json`;
+        a.click();
+        
+        URL.revokeObjectURL(url);
+        alert('데이터가 성공적으로 내보내졌습니다! 💾');
+    }
+
+    /**
+     * 📥 LocalStorage 데이터 불러오기 (파일 선택 및 덮어쓰기)
+     */
+    window.importData = function() {
+        if (!confirm('경고: 데이터를 불러오면 현재 저장된 이름, 돈, 여행 기록이 파일 내용으로 덮어쓰여집니다. 계속하시겠습니까?')) {
+            return;
+        }
+
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = event => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    
+                    // 기존 데이터는 유지하고 백업된 데이터만 덮어쓰거나 추가 (선택적)
+                    // 현재는 백업 파일의 key만 덮어쓰는 방식을 사용
+                    for (const key in data) {
+                        if (key.startsWith('focusFlight')) { 
+                             localStorage.setItem(key, data[key]);
+                        }
+                    }
+                    
+                    alert('데이터 불러오기 완료! 변경 사항을 적용하기 위해 페이지를 새로고침합니다. 🔄');
+                    window.location.reload(); 
+                    
+                } catch (error) {
+                    alert('파일을 읽는 도중 오류가 발생했습니다: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
     
     // ----------------------------------------------------
     // 🚀 앱 초기 실행
