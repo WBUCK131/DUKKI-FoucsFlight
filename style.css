@@ -7,8 +7,10 @@
     --color-background-dark: #212529; 
     --color-surface-dark: #343a40; 
     --color-surface-lighter: #495057; 
-    --color-surface-translucent: rgba(52, 58, 64, 0.7); 
-    --color-border-dark: rgba(255, 255, 255, 0.1); 
+    /* [수정] 글래스모피즘 강화: 배경 투명도 증가 (기존 0.7 -> 0.55) */
+    --color-surface-translucent: rgba(52, 58, 64, 0.55); 
+    /* [수정] 글래스모피즘 강화: 테두리 선명도 증가 (기존 0.1 -> 0.18) */
+    --color-border-dark: rgba(255, 255, 255, 0.18); 
     --color-shadow-dark: rgba(0, 0, 0, 0.4); 
 }
 
@@ -24,9 +26,15 @@ body {
 
 /* 💎 글래스모피즘 스타일 */
 .controls-container, #bottomNav, .modal-content, .settings-content, #nameModal .modal-content {
-    background: var(--color-surface-translucent); 
-    -webkit-backdrop-filter: blur(20px); 
-    backdrop-filter: blur(20px); 
+    /* [수정] 글래스모피즘 강화: 하이라이트 그라데이션 추가 */
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.0) 60%
+    ), var(--color-surface-translucent);
+    /* [수정] 글래스모피즘 강화: 블러 효과 증가 (기존 20px -> 25px) */
+    -webkit-backdrop-filter: blur(25px); 
+    backdrop-filter: blur(25px); 
     border: 1px solid var(--color-border-dark);
     box-shadow: 0 8px 32px 0 var(--color-shadow-dark);
     color: var(--color-text-light);
@@ -68,9 +76,15 @@ body {
     z-index: 9999;
     padding: 15px 25px;
     border-radius: 15px;
-    background: var(--color-surface-translucent);
-    -webkit-backdrop-filter: blur(20px); 
-    backdrop-filter: blur(20px); 
+    /* [수정] 글래스모피즘 강화: 하이라이트 그라데이션 추가 */
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.0) 60%
+    ), var(--color-surface-translucent);
+    /* [수정] 글래스모피즘 강화: 블러 효과 증가 (기존 20px -> 25px) */
+    -webkit-backdrop-filter: blur(25px); 
+    backdrop-filter: blur(25px); 
     border: 1px solid var(--color-border-dark);
     box-shadow: 0 8px 32px 0 var(--color-shadow-dark);
     color: var(--color-text-light);
@@ -299,9 +313,15 @@ body {
     font-size: 16px;  
     font-weight: bold;  
     color: var(--color-text-light);  
-    background: var(--color-surface-translucent);  
-    -webkit-backdrop-filter: blur(20px);  
-    backdrop-filter: blur(20px);  
+    /* [수정] 글래스모피즘 강화: 하이라이트 그라데이션 추가 */
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.0) 60%
+    ), var(--color-surface-translucent);
+    /* [수정] 글래스모피즘 강화: 블러 효과 증가 (기존 20px -> 25px) */
+    -webkit-backdrop-filter: blur(25px);  
+    backdrop-filter: blur(25px);  
     border: 1px solid var(--color-border-dark);  
     border-radius: 15px;  
     padding: 8px 16px;  
@@ -313,9 +333,15 @@ body {
   
 /* 🆕 각 요소별 박스 스타일 */  
 .timer-box {  
-    background: var(--color-surface-translucent);  
-    -webkit-backdrop-filter: blur(20px);  
-    backdrop-filter: blur(20px);  
+    /* [수정] 글래스모피즘 강화: 하이라이트 그라데이션 추가 */
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.0) 60%
+    ), var(--color-surface-translucent);
+    /* [수정] 글래스모피즘 강화: 블러 효과 증가 (기존 20px -> 25px) */
+    -webkit-backdrop-filter: blur(25px);  
+    backdrop-filter: blur(25px);  
     border: 1px solid var(--color-border-dark);  
     border-radius: 12px;  
     padding: 8px 12px;  
@@ -380,9 +406,15 @@ body {
     width: 45px; 
     height: 45px;
     border-radius: 50%; 
-    background: var(--color-surface-translucent);
-    -webkit-backdrop-filter: blur(20px); 
-    backdrop-filter: blur(20px); 
+    /* [수정] 글래스모피즘 강화: 하이라이트 그라데이션 추가 */
+    background: linear-gradient(
+        135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.0) 60%
+    ), var(--color-surface-translucent);
+    /* [수정] 글래스모피즘 강화: 블러 효과 증가 (기존 20px -> 25px) */
+    -webkit-backdrop-filter: blur(25px); 
+    backdrop-filter: blur(25px); 
     border: 1px solid var(--color-border-dark);
     box-shadow: 0 4px 16px 0 var(--color-shadow-dark);
     color: var(--color-text-light);
@@ -1126,4 +1158,5 @@ body {
 
 #slideHandle:hover {
     background: #0099ff;
+}
 }
